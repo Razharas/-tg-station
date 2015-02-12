@@ -119,6 +119,7 @@
 
 /obj/item/weapon/storage/firstaid/tactical/New()
 	..()
+<<<<<<< Updated upstream
 	if (empty) return
 	new /obj/item/clothing/tie/stethoscope( src )
 	new /obj/item/weapon/surgicaldrill ( src )
@@ -127,6 +128,16 @@
 	new /obj/item/weapon/reagent_containers/pill/patch/silver_sulf( src )
 	new /obj/item/weapon/reagent_containers/syringe/lethal/choral( src )
 	new /obj/item/clothing/glasses/hud/health/night( src )
+=======
+	if(empty) return
+	new /obj/item/stack/medical/gauze(src)
+	new /obj/item/weapon/defibrillator/compact/combat/loaded(src)
+	new /obj/item/weapon/reagent_containers/hypospray/combat(src)
+	new /obj/item/weapon/reagent_containers/pill/patch/styptic(src)
+	new /obj/item/weapon/reagent_containers/pill/patch/silver_sulf(src)
+	new /obj/item/weapon/reagent_containers/syringe/lethal/choral(src)
+	new /obj/item/clothing/glasses/hud/health/night(src)
+>>>>>>> Stashed changes
 	return
 
 

@@ -68,7 +68,7 @@
 				if(ishuman(target))
 					var/mob/living/carbon/human/H = target
 					if(H.dna)
-						if(NOBLOOD in H.dna.species.specflags)
+						if(NOBLOOD in H.dna.species.specflags && !H.dna.species.exotic_blood)
 							user << "<span class='notice'>You are unable to locate any blood.</span>"
 							return
 				if(reagents.has_reagent("blood"))
@@ -92,6 +92,7 @@
 							busy = 0
 							return
 					busy = 0
+<<<<<<< Updated upstream
 					B.holder = src
 					B.volume = amount
 					//set reagent data
@@ -132,6 +133,23 @@
 					reagents.update_total()
 					on_reagent_change()
 					reagents.handle_reactions()
+=======
+					var/datum/reagent/B
+					B = T.take_blood(src,amount)
+
+					if(!B && ishuman(target))
+						var/mob/living/carbon/human/H = target
+						if(H.dna && H.dna.species.exotic_blood && H.reagents.total_volume)
+							target.reagents.trans_to(src, amount)
+						else
+							user << "<span class='notice'>You are unable to locate any blood.</span>"
+							return
+					if (B)
+						src.reagents.reagent_list += B
+						src.reagents.update_total()
+						src.on_reagent_change()
+						src.reagents.handle_reactions()
+>>>>>>> Stashed changes
 					user.visible_message("<span class='notice'>[user] takes a blood sample from [target].</span>")
 
 			else //if not mob

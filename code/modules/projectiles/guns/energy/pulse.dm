@@ -20,8 +20,13 @@
 	w_class = 3.0
 	icon_state = "pulse_carbine"
 	item_state = "pulse"
+<<<<<<< Updated upstream
 	ammo_type = list(/obj/item/ammo_casing/energy/laser/pulse/carbine, /obj/item/ammo_casing/energy/electrode/carbine, /obj/item/ammo_casing/energy/laser/carbine)
 	cell_type = "/obj/item/weapon/stock_parts/cell"
+=======
+	cell_type = "/obj/item/weapon/stock_parts/cell/pulse/carbine"
+	can_flashlight = 1
+>>>>>>> Stashed changes
 
 /obj/item/weapon/gun/energy/pulse_rifle/pulse_carbine/loyalpin
 	pin = /obj/item/device/firing_pin/implant/loyalty

@@ -143,11 +143,25 @@
 	icon_state = "vodkabottle"
 	list_reagents = list("vodka" = 100)
 
+<<<<<<< Updated upstream
 /obj/item/weapon/reagent_containers/food/drinks/bottle/tequilla
 	name = "Caccavo Guaranteed Quality Tequilla"
 	desc = "Made from premium petroleum distillates, pure thalidomide and other fine quality ingredients!"
 	icon_state = "tequillabottle"
 	list_reagents = list("tequilla" = 100)
+=======
+/obj/item/weapon/reagent_containers/food/drinks/bottle/vodka/badminka
+	name = "Badminka Vodka"
+	desc = "The label's written in Cyrillic. All you can make out is the name and a word that looks vaguely like 'Vodka'."
+	icon_state = "badminka"
+	list_reagents = list("vodka" = 100)
+
+/obj/item/weapon/reagent_containers/food/drinks/bottle/tequila
+	name = "Caccavo Guaranteed Quality Tequila"
+	desc = "Made from premium petroleum distillates, pure thalidomide and other fine quality ingredients!"
+	icon_state = "tequillabottle"
+	list_reagents = list("tequila" = 100)
+>>>>>>> Stashed changes
 
 /obj/item/weapon/reagent_containers/food/drinks/bottle/bottleofnothing
 	name = "Bottle of Nothing"
