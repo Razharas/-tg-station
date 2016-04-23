@@ -331,9 +331,10 @@
 
 /obj/screen/click_catcher/proc/MakeGreed()
 	. = list()
+	var/obj/screen/click_catcher/CC
 	for(var/i = 0, i<15, i++)
 		for(var/j = 0, j<15, j++)
-			var/obj/screen/click_catcher/CC = new()
+			CC = new()
 			CC.screen_loc = "NORTH-[i],EAST-[j]"
 			. += CC
 
