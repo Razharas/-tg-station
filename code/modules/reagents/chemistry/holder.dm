@@ -61,16 +61,24 @@ var/const/INJECT = 5 //injection
 /datum/reagents/Destroy()
 	. = ..()
 	SSobj.processing -= src
-	for(var/reagent in reagent_list)
-		var/datum/reagent/R = reagent
-		qdel(R)
 	reagent_list.Cut()
 	reagent_list = null
 	if(my_atom && my_atom.reagents == src)
 		my_atom.reagents = null
 
-/datum/reagents/proc/remove_any(amount = 1)
-	var/total_transfered = 0
+/datum/reagents/proc/remove_any(var/amount = 1)
+	. = amount
+	while(amount && total_volume)
+		var/removed = total_volume
+		var/to_remove = rand(1, amount)
+		var/what_to_remove = pick(reagent_list)
+		remove_reagent(what_to_remove, to_remove)
+		removed -= total_volume
+		amount -= removed
+	. -= amount
+
+
+/*	var/total_transfered = 0
 	var/current_list_element = 1
 
 	current_list_element = rand(1, reagent_list.len)
@@ -93,39 +101,40 @@ var/const/INJECT = 5 //injection
 
 	handle_reactions()
 	return total_transfered
-
+*/
 /datum/reagents/proc/remove_all(amount = 1)
 	if(total_volume > 0)
+		var/list/L
 		var/part = amount / total_volume
 		for(var/reagent in reagent_list)
-			var/datum/reagent/R = reagent
-			remove_reagent(R.id, R.volume * part)
-
-		update_total()
-		handle_reactions()
-		return amount
+			L = reagent_list[reagent]
+			. = L[AMOUNT]
+			remove_reagent(reagent, . * part)
+	. = amount
 
 /datum/reagents/proc/get_master_reagent_name()
-	var/name
 	var/max_volume = 0
+	var/list/L
+	var/A
+	var/B
 	for(var/reagent in reagent_list)
-		var/datum/reagent/R = reagent
-		if(R.volume > max_volume)
-			max_volume = R.volume
-			name = R.name
-
-	return name
+		L = reagent_list[reagent]
+		A = L[AMOUNT]
+		if(A > max_volume)
+			B = L[SOURCE]
+			max_volume = A
+			. = B.name
 
 /datum/reagents/proc/get_master_reagent_id()
-	var/id
 	var/max_volume = 0
+	var/list/L
+	var/A
 	for(var/reagent in reagent_list)
-		var/datum/reagent/R = reagent
-		if(R.volume > max_volume)
-			max_volume = R.volume
-			id = R.id
-
-	return id
+		L = reagent_list[reagent]
+		A = L[AMOUNT]
+		if(A > max_volume)
+			max_volume = A
+			. = reagent
 
 /datum/reagents/proc/trans_to(obj/target, amount=1, multiplier=1, preserve_data=1, no_react = 0)//if preserve_data=0, the reagents data will be lost. Usefull if you use data for some strange stuff and don't want it to be transferred.
 	if(!target || !total_volume)
@@ -134,26 +143,24 @@ var/const/INJECT = 5 //injection
 	if(istype(target, /datum/reagents))
 		R = target
 	else
-		if(!target.reagents || src.total_volume<=0)
+		if(!target.reagents || target.reagents.maximum_volume == target.reagents.total_volume)
 			return
 		R = target.reagents
-	amount = min(min(amount, src.total_volume), R.maximum_volume-R.total_volume)
-	var/part = amount / src.total_volume
+	amount = min(min(amount, total_volume), R.maximum_volume-R.total_volume)
+	var/part = amount / total_volume
 	var/trans_data = null
+	. = list()
 	for(var/reagent in reagent_list)
-		var/datum/reagent/T = reagent
-		var/transfer_amount = T.volume * part
+		var/list/L = reagent_list[reagent]
+		var/transfer_amount = L[AMOUNT] * part
 		if(preserve_data)
-			trans_data = copy_data(T)
-		R.add_reagent(T.id, transfer_amount * multiplier, trans_data, chem_temp, no_react = 1) //we only handle reaction after every reagent has been transfered.
-		remove_reagent(T.id, transfer_amount)
-
-	update_total()
-	R.update_total()
+			trans_data = L[DATA]
+		R.add_reagent(reagent, transfer_amount * multiplier, trans_data, no_react = 1) //we only handle reaction after every reagent has been transfered.
+		remove_reagent(reagent, transfer_amount)
+		. += reagent
 	if(!no_react)
-		R.handle_reactions()
-		src.handle_reactions()
-	return amount
+		R.handle_reactions(.)
+	. = amount
 
 /datum/reagents/proc/copy_to(obj/target, amount=1, multiplier=1, preserve_data=1)
 	if(!target)
