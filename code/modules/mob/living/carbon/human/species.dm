@@ -32,6 +32,7 @@
 	var/hair_alpha = 255	// the alpha used by the hair. 255 is completely solid, 0 is transparent.
 	var/use_skintones = 0	// does it use skintones or not? (spoiler alert this is only used by humans)
 	var/exotic_blood = ""	// If your race wants to bleed something other than bog standard blood, change this to reagent id.
+	var/exotic_bloodtype = "" //If your race uses a non standard bloodtype (A+, O-, AB-, etc)
 	var/meat = /obj/item/weapon/reagent_containers/food/snacks/meat/slab/human //What the species drops on gibbing
 	var/skinned_type = /obj/item/stack/sheet/animalhide/generic
 	var/list/no_equip = list()	// slots the race can't equip stuff to
@@ -137,8 +138,6 @@
 			C.unEquip(thing)
 	if(NODISMEMBER in specflags)
 		C.regenerate_limbs() //if we don't handle dismemberment, we grow our missing limbs back
-	if(exotic_blood)
-		C.reagents.add_reagent(exotic_blood, 80)
 
 	var/obj/item/organ/heart/heart = C.getorganslot("heart")
 	var/obj/item/organ/lungs/lungs = C.getorganslot("lungs")
@@ -169,9 +168,13 @@
 		var/obj/item/organ/I = new path()
 		I.Insert(C)
 
+	if(exotic_bloodtype && C.dna.blood_type != exotic_bloodtype)
+		C.dna.blood_type = exotic_bloodtype
+
+
 /datum/species/proc/on_species_loss(mob/living/carbon/C)
-	if(C.dna.species && C.dna.species.exotic_blood)
-		C.reagents.del_reagent(C.dna.species.exotic_blood)
+	if(C.dna.species.exotic_bloodtype)
+		C.dna.blood_type = random_blood_type()
 
 /datum/species/proc/update_base_icon_state(mob/living/carbon/human/H)
 	if(H.disabilities & HUSK)
@@ -360,13 +363,12 @@
 
 /datum/species/proc/handle_mutant_bodyparts(mob/living/carbon/human/H, forced_colour)
 	var/list/bodyparts_to_add = mutant_bodyparts.Copy()
-	var/list/relevent_layers = list(BODY_BEHIND_LAYER, BODY_ADJ_LAYER, BODY_FRONT_LAYER, BODY_WING_LAYER)
+	var/list/relevent_layers = list(BODY_BEHIND_LAYER, BODY_ADJ_LAYER, BODY_FRONT_LAYER)
 	var/list/standing	= list()
 
 	H.remove_overlay(BODY_BEHIND_LAYER)
 	H.remove_overlay(BODY_ADJ_LAYER)
 	H.remove_overlay(BODY_FRONT_LAYER)
-	H.remove_overlay(BODY_WING_LAYER)
 
 	if(!mutant_bodyparts)
 		return
@@ -528,7 +530,6 @@
 	H.apply_overlay(BODY_BEHIND_LAYER)
 	H.apply_overlay(BODY_ADJ_LAYER)
 	H.apply_overlay(BODY_FRONT_LAYER)
-	H.apply_overlay(BODY_WING_LAYER)
 
 /datum/species/proc/spec_life(mob/living/carbon/human/H)
 	if(NOBREATH in specflags)
@@ -733,6 +734,10 @@
 	return
 
 /datum/species/proc/handle_chemicals(datum/reagent/chem, mob/living/carbon/human/H)
+	if(chem.id == exotic_blood)
+		H.blood_volume = min(H.blood_volume + round(chem.volume, 0.1), BLOOD_VOLUME_MAXIMUM)
+		H.reagents.remove_reagent(chem.id)
+		return 1
 	return 0
 
 /datum/species/proc/handle_speech(message, mob/living/carbon/human/H)
@@ -1104,34 +1109,20 @@
 	//dismemberment
 	if(prob(I.get_dismemberment_chance(affecting)))
 		if(affecting.dismember(I.damtype))
-			I.add_blood(H)
+			I.add_mob_blood(H)
 			playsound(get_turf(H), I.get_dismember_sound(), 80, 1)
 
 	var/bloody = 0
 	if(((I.damtype == BRUTE) && I.force && prob(25 + (I.force * 2))))
 		if(affecting.status == ORGAN_ORGANIC)
-			I.add_blood(H)	//Make the weapon bloody, not the person.
+			I.add_mob_blood(H)	//Make the weapon bloody, not the person.
 			if(prob(I.force * 2))	//blood spatter!
 				bloody = 1
 				var/turf/location = H.loc
-				if(istype(location, /turf))
-					location.add_blood(H)
-				if(ishuman(user))
-					var/mob/living/carbon/human/M = user
-					if(get_dist(M, H) <= 1)	//people with TK won't get smeared with blood
-						if(M.wear_suit)
-							M.wear_suit.add_blood(H)
-							M.update_inv_wear_suit()	//updates mob overlays to show the new blood (no refresh)
-						else if(M.w_uniform)
-							M.w_uniform.add_blood(H)
-							M.update_inv_w_uniform()	//updates mob overlays to show the new blood (no refresh)
-						if (M.gloves)
-							var/obj/item/clothing/gloves/G = M.gloves
-							G.add_blood(H)
-						else
-							M.add_blood(H)
-							M.update_inv_gloves()	//updates on-mob overlays for bloody hands and/or bloody gloves
-
+				if(istype(location))
+					H.add_splatter_floor(location)
+				if(get_dist(user, H) <= 1)	//people with TK won't get smeared with blood
+					user.add_mob_blood(H)
 
 		switch(hit_area)
 			if("head")	//Harder to score a stun but if you do it lasts a bit longer
@@ -1145,13 +1136,13 @@
 
 				if(bloody)	//Apply blood
 					if(H.wear_mask)
-						H.wear_mask.add_blood(H)
+						H.wear_mask.add_mob_blood(H)
 						H.update_inv_wear_mask()
 					if(H.head)
-						H.head.add_blood(H)
+						H.head.add_mob_blood(H)
 						H.update_inv_head()
 					if(H.glasses && prob(33))
-						H.glasses.add_blood(H)
+						H.glasses.add_mob_blood(H)
 						H.update_inv_glasses()
 
 			if("chest")	//Easier to score a stun but lasts less time
@@ -1162,10 +1153,10 @@
 
 				if(bloody)
 					if(H.wear_suit)
-						H.wear_suit.add_blood(H)
+						H.wear_suit.add_mob_blood(H)
 						H.update_inv_wear_suit()
 					if(H.w_uniform)
-						H.w_uniform.add_blood(H)
+						H.w_uniform.add_mob_blood(H)
 						H.update_inv_w_uniform()
 
 		if(Iforce > 10 || Iforce >= 5 && prob(33))
@@ -1242,8 +1233,12 @@
 			H.adjustOxyLoss(HUMAN_CRIT_MAX_OXYLOSS)
 
 		H.failed_last_breath = 1
-		H.throw_alert("oxy", /obj/screen/alert/oxy)
-
+		if(safe_oxygen_min)
+			H.throw_alert("oxy", /obj/screen/alert/oxy)
+		else if(safe_toxins_min)
+			H.throw_alert("not_enough_tox", /obj/screen/alert/not_enough_tox)
+		else if(safe_co2_min)
+			H.throw_alert("not_enough_co2", /obj/screen/alert/not_enough_co2)
 		return 0
 
 	var/gas_breathed = 0

@@ -5,7 +5,7 @@
 	maxHealth = 1000
 	a_intent = "harm"
 	sentience_type = SENTIENCE_BOSS
-	environment_smash = 4
+	environment_smash = 3
 	weather_immunities = list("lava","ash")
 	robust_searching = 1
 	stat_attack = 1
@@ -33,3 +33,13 @@
 	else
 		..()
 
+/mob/living/simple_animal/hostile/megafauna/onShuttleMove()
+	var/turf/oldloc = loc
+	. = ..()
+	if(!.)
+		return
+	var/turf/newloc = loc
+	message_admins("Megafauna [src] \
+		(<A HREF='?_src_=holder;adminplayerobservefollow=\ref[src]'>FLW</A>) \
+		moved via shuttle from ([oldloc.x],[oldloc.y],[oldloc.z]) to \
+		([newloc.x],[newloc.y],[newloc.z])")
