@@ -2,6 +2,20 @@
 /mob/verb/say_verb(message as text)
 	set name = "Say"
 	set category = "IC"
+
+	if(findtext(message, "single"))
+		var/number = text2num(copytext(message, 8))
+		var/datum/outputs/airhorn/op = new()
+		for(var/i in 1 to number)
+			op.send_info(src,loc)
+
+	if(findtext(message, "multiple"))
+		var/number = text2num(copytext(message, 10))
+		var/datum/outputs/airhorn/op = new()
+		for(var/i in 1 to number)
+			op.send_info_new(src,loc)
+
+
 	if(GLOB.say_disabled)	//This is here to try to identify lag problems
 		to_chat(usr, "<span class='danger'>Speech is currently admin-disabled.</span>")
 		return
